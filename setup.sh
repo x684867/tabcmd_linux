@@ -28,7 +28,7 @@ export EXIT_ERROR=2
 #
 # Initial prompts and confirmations.
 #
-
+[ "$(whoami)" != "root" ] && echo "This file must be executed as root (or through sudo)." && EXIT_ERROR
 echo "$0 starting..."
 echo "-------------------------------------------------------------------"
 echo "(c) 2014 Sam Caldwell.  See https://github.com/x684867/tabcmd_linux"
@@ -60,22 +60,49 @@ while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"]; do
   echo "Don't worry, the script will wait right here until you are finished...."
   echo " "
   read -p "Have you uploaded tabcmd.jar to this server? (y/n)" ANSWER 
+  [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"] && {
+    echo " " 
+    echo "Where did you upload the tabcmd.jar file?"
+    echo " "
+    read -p "Enter path: " $UPLOAD_PATH
+    echo " "
+    if [ -z "$UPLOAD_PATH" ]; then
+      echo "Verifying the file/path..."
+      
+      if [ -d $UPLOAD_PATH ]; then 
+        UPLOAD_PATH="$UPLOAD_PATH/tabcmd.jar"
+      fi
+      if [ -f $UPLOAD_PATH ]; then
+        ANSWER="Y"
+      else
+        echo "Could not find the file...please investigate and the script will retry."
+        ANSWER="N"
+      fi
+    else
+      echo "No UPLOAD_PATH specified.  Try again."
+      ANSWER="N"
+    fi
+  }
 done
+echo " "
 echo "Excellent....  We are ready to proceed."
+echo " "
 #
 # Start setting up the prerequisites.
 #
+install_package(){
+  echo "Installing $1"
+  apt-get install $1 -y || echo "failed to install $1" && exit EXIT_ERROR
+  echo "Package $1 is installed"
+  for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+}
+
 echo " "
 echo "Installing ruby environment..."
 echo " "
-for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
-apt-get install ruby1.9.1 -y || echo "failed to install ruby1.9.1" && exit EXIT_ERROR
-for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
-
-apt-get install ruby-rvm -y || echo "failed to install ruby-rvm" && exit EXIT_ERROR
-for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
-
-apt-get install 
-
-
-
+install_package ruby-1.9.1 && \
+install_package ruby-rvm && \
+install_package unzip && \
+echo " " 
+echo "Prerequisites are installed."
+echo " "
