@@ -25,6 +25,9 @@ export EXIT_SUCCESS=0
 export EXIT_CANCEL=1
 export EXIT_ERROR=2
 
+export TABCMD_DIR=/usr/local/tabcmd
+
+
 #
 # Initial prompts and confirmations.
 #
@@ -64,7 +67,7 @@ while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"]; do
     echo " " 
     echo "Where did you upload the tabcmd.jar file?"
     echo " "
-    read -p "Enter path: " $UPLOAD_PATH
+    read -p "Enter path: " UPLOAD_PATH
     echo " "
     if [ -z "$UPLOAD_PATH" ]; then
       echo "Verifying the file/path..."
@@ -74,6 +77,7 @@ while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"]; do
       fi
       if [ -f $UPLOAD_PATH ]; then
         ANSWER="Y"
+        mv $UPLOAD_PATH /tmp/tabcmd.jar
       else
         echo "Could not find the file...please investigate and the script will retry."
         ANSWER="N"
@@ -106,3 +110,11 @@ install_package unzip && \
 echo " " 
 echo "Prerequisites are installed."
 echo " "
+echo "Creating $TABCMD_DIR"
+mkdir $TABCMD_DIR || echo "Failed to create $TABCMD_DIR" && exit EXIT_ERROR
+[ ! -d $TABCMD_DIR ] && echo "Verification failed for ($TABCMD_DIR)"
+echo " "
+echo "Moving tabcmd.jar into $TABCMD_DIR"
+[ ! -f /tmp/tabcmd.jar ] && excho "Could not find /tmp/tabcmd.jar" && exit EXIT_ERROR
+mv /tmp/tabcmd.jar $TABCMD_DIR || echo "move failed." && exit EXIT_ERROR
+cd $TABCMD_DIR
