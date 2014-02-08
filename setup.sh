@@ -61,17 +61,20 @@ while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"]; do
   echo " "
   read -p "Have you uploaded tabcmd.jar to this server? (y/n)" ANSWER 
 done
-echo "connect to the Tableau Server and find the Tabcmd installer within your"
-echo "server environment, install tabcmd to your server or another compatible"
-echo "machine.  Then obtain tabcmd.jar from within the tabcmd directory."
-echo " "
-echo 
-echo "ta
+echo "Excellent....  We are ready to proceed."
 #
 # Start setting up the prerequisites.
 #
-apt-get install ruby1.9.1 -y && \
-apt-get install ruby-rvm -y && \
+echo " "
+echo "Installing ruby environment..."
+echo " "
+for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+apt-get install ruby1.9.1 -y || echo "failed to install ruby1.9.1" && exit EXIT_ERROR
+for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+
+apt-get install ruby-rvm -y || echo "failed to install ruby-rvm" && exit EXIT_ERROR
+for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+
 apt-get install 
 
 
