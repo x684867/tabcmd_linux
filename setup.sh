@@ -24,14 +24,40 @@
 export EXIT_SUCCESS=0
 export EXIT_CANCEL=1
 export EXIT_ERROR=2
+export HAS_NETWORKING=0
 
 export TABCMD_DIR=/usr/local/tabcmd
 
+cd ~/
+
+install_package() {
+	if [ "$(dpkg -l $1 | tail -n1 | grep ii | grep $1 | awk '{print $1"_"$2}')" == "ii_$1" ]; then
+		echo ruby1.9.1 is already installed
+	else
+		echo "install_package() installing."
+		[ "$HAS_NETWORKING" == "0" ] && {
+	  		echo "install_package() requires networking."
+	  		exit $EXIT_ERROR
+	  	}
+	  	echo "Installing $1"
+	  	apt-get install $1 -y || echo "failed to install $1" && exit $EXIT_ERROR
+	  	echo "Package $1 is installed"
+	  	for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+	  	echo "install_package() finished."
+	fi
+	return 0
+}
 
 #
 # Initial prompts and confirmations.
 #
-[ "$(whoami)" != "root" ] && echo "This file must be executed as root (or through sudo)." && EXIT_ERROR
+[ "$(whoami)" != "root" ] && {
+	echo "This file must be executed as root (or through sudo)." 
+	exit $EXIT_ERROR
+}
+ping -c1 8.8.8.8 &> /dev/null
+[ "$?" == "0" ] && export HAS_NETWORKING=1
+
 echo "$0 starting..."
 echo "-------------------------------------------------------------------"
 echo "(c) 2014 Sam Caldwell.  See https://github.com/x684867/tabcmd_linux"
@@ -40,10 +66,13 @@ echo " "
 echo "This script will configure a brand new Ubuntu Linux installation for use with tabcmd?"
 echo " " 
 read -p "Is this what you want to do? (y/n)" ANSWER
-[ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"] && echo "Cancelled." && exit $EXIT_CANCEL
+[ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y" ] && {
+	echo "Cancelled.";
+	exit $EXIT_CANCEL
+}
 echo " "
-read -p "Do you have a valid Tableau Server license?" ANSWER
-[ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"] && {
+read -p "Do you have a valid Tableau Server license? (y/n)" ANSWER
+[ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y" ] && {
   echo "Cancelled.  You must have a valid license to use this tool."
   exit $EXIT_CANCEL
 }
@@ -58,35 +87,35 @@ echo "       tabcmd.jar."
 echo "   (4) Upload tabcmd.jar to this server using SFTP (FileZilla is a great"
 echo "       tool for doing this."
 echo " "
+
 ANSWER="N"
-while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"]; do
+read -p "Have you uploaded tabcmd.jar to this server? (y/n)" ANSWER 
+while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y" ]; do
   echo "Don't worry, the script will wait right here until you are finished...."
   echo " "
   read -p "Have you uploaded tabcmd.jar to this server? (y/n)" ANSWER 
-  [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y"] && {
-    echo " " 
-    echo "Where did you upload the tabcmd.jar file?"
-    echo " "
-    read -p "Enter path: " UPLOAD_PATH
+  echo " "
+done
+echo " "
+ANSWER="N"
+while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y" ]; do
+	echo "Where did you upload the tabcmd.jar file (\$path/tabcmd.jar)?"
+	read -p "Enter path: " UPLOAD_PATH
     echo " "
     if [ -z "$UPLOAD_PATH" ]; then
+      echo "No UPLOAD_PATH specified.  Try again."
+      ANSWER="N"
+	else
       echo "Verifying the file/path..."
-      
-      if [ -d $UPLOAD_PATH ]; then 
-        UPLOAD_PATH="$UPLOAD_PATH/tabcmd.jar"
-      fi
+
       if [ -f $UPLOAD_PATH ]; then
         ANSWER="Y"
-        mv $UPLOAD_PATH /tmp/tabcmd.jar
+        cp $UPLOAD_PATH /tmp/tabcmd.jar
       else
         echo "Could not find the file...please investigate and the script will retry."
         ANSWER="N"
       fi
-    else
-      echo "No UPLOAD_PATH specified.  Try again."
-      ANSWER="N"
     fi
-  }
 done
 echo " "
 echo "Excellent....  We are ready to proceed."
@@ -94,27 +123,86 @@ echo " "
 #
 # Start setting up the prerequisites.
 #
-install_package(){
-  echo "Installing $1"
-  apt-get install $1 -y || echo "failed to install $1" && exit EXIT_ERROR
-  echo "Package $1 is installed"
-  for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
-}
-
 echo " "
-echo "Installing ruby environment..."
+echo "Installing prerequisites..."
 echo " "
-install_package ruby-1.9.1 && \
-install_package ruby-rvm && \
-install_package unzip && \
+echo "    Installing ruby1.9.1"
+install_package ruby1.9.1 
+echo " "
+echo "    Installing ruby-rvm"
+echo " "
+install_package ruby-rvm
+echo " "
+echo "    Installing unzip"
+echo " "
+install_package unzip 
 echo " " 
 echo "Prerequisites are installed."
 echo " "
 echo "Creating $TABCMD_DIR"
-mkdir $TABCMD_DIR || echo "Failed to create $TABCMD_DIR" && exit EXIT_ERROR
+[ ! -d $TABCMD_DIR ] && rm -rf $TABCMD_DIR
+mkdir -p $TABCMD_DIR || {
+	echo "Failed to create $TABCMD_DIR"; 
+	exit $EXIT_ERROR
+}
+echo "checking..."
 [ ! -d $TABCMD_DIR ] && echo "Verification failed for ($TABCMD_DIR)"
 echo " "
 echo "Moving tabcmd.jar into $TABCMD_DIR"
-[ ! -f /tmp/tabcmd.jar ] && excho "Could not find /tmp/tabcmd.jar" && exit EXIT_ERROR
-mv /tmp/tabcmd.jar $TABCMD_DIR || echo "move failed." && exit EXIT_ERROR
+[ ! -f /tmp/tabcmd.jar ] && echo "Could not find /tmp/tabcmd.jar" && exit $EXIT_ERROR
+[ -f $TABCMD_DIR/tabcmd.jar ] && rm $TABCMD_DIR/tabcmd.jar 
+mv /tmp/tabcmd.jar $TABCMD_DIR || {
+	echo "move failed."; 
+	exit $EXIT_ERROR
+}
 cd $TABCMD_DIR
+unzip $TABCMD_DIR/tabcmd.jar
+cd $TABCMD_DIR/
+echo "Current Directory: $(pwd)"
+echo " "
+echo "Installing Ruby Gems"
+echo " "
+gem update
+gem install abstract && \
+gem install bundler && \
+gem install rake && \
+gem install rack && \
+gem install unit_record && \
+gem install treetop && \
+gem install thor && \
+gem install rubyzip && \
+gem install rack-test && \
+gem install rack-mount && \
+gem install highline && \
+gem install builder && \
+gem install log4r && \
+gem install columnize && \
+gem install erubis && \
+gem install json_pure && \
+gem install jruby-openssl && \
+gem install i18n && \
+gem install mail && \
+gem install mime-types && \
+gem install polyglot && \
+gem install arel && \
+gem install gem_plugin && \
+gem install rchardet && \
+gem install sources && \
+gem install mmf && \
+gem install mkrf && \
+
+
+
+
+
+echo " "
+echo "Gems Installed."
+echo " " 
+echo "------------------------------"
+echo " Gem List"
+echo "------------------------------"
+gem list
+echo "------------------------------"
+echo " $(date)"
+echo "------------------------------"
+

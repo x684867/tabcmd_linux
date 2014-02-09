@@ -24,7 +24,22 @@ tabcmd_linux
 
 Objective: 
 
-  Implement Tableau's tabcmd command line utility in Linux by creating a script that will setup a user-provided
-  tabcmd.jar file for use within the Linux Operating System (also may work on mac).
+	Implement Tableau's tabcmd command line utility in Linux by creating a script 
+	that will setup a user-provided tabcmd.jar file for use within the Linux Operating 
+	System (also may work on mac).
   
+How-To-Use:
 
+	(1) Download the script:
+	
+		wget https://raw.github.com/x684867/tabcmd_linux/master/setup.sh -O ~/setup.sh
+		
+	(2) Make the script executable:
+	
+		chmod +x ~/setup.sh
+		
+	(3) Execute the setup script:
+	
+		~/setup.sh
+		
+	(4) 	
