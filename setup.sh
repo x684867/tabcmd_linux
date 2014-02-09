@@ -28,8 +28,6 @@ export HAS_NETWORKING=0
 
 export TABCMD_DIR=/usr/local/tabcmd
 
-cd ~/
-
 install_package() {
 	if [ "$(dpkg -l $1 | tail -n1 | grep ii | grep $1 | awk '{print $1"_"$2}')" == "ii_$1" ]; then
 		echo ruby1.9.1 is already installed
@@ -59,7 +57,11 @@ install_package() {
 	exit $EXIT_ERROR
 }
 ping -c1 8.8.8.8 &> /dev/null
-[ "$?" == "0" ] && export HAS_NETWORKING=1
+[ "$?" == "0" ] && {
+	export HAS_NETWORKING=1
+	cd ~/
+	wget http://javadl.sun.com/webapps/download/AutoDL?BundleId=83376 -O ~/jre.tar.gz	
+}
 
 echo "$0 starting..."
 echo "-------------------------------------------------------------------"
@@ -140,6 +142,11 @@ echo " "
 echo "    Installing unzip"
 echo " "
 install_package unzip 
+echo " "
+echo "Install JAVA"
+gunzip jre.gz
+chmod +x jre
+./jre
 echo " " 
 echo "Prerequisites are installed."
 echo " "
@@ -212,11 +219,14 @@ echo "------------------------------"
 echo " $(date)"
 echo "------------------------------"
 echo " "
-echo "Remove tabutil.rb"
-[ -f "$TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb" ] && rm ~/tabcmd/rb/tabcmd/common/ruby/lib/tabutil.rb
-[ -f "$TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb" ] && echo "Failed to delete tabutil.rb" && exit $EXIT_ERROR
+echo "Remove tabutil.rb ($TABCMD_DIR)"
+[ -f "$TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb" ] && rm $TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb
+[ -f "$TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb" ] && {
+	echo "Failed to delete tabutil.rb"
+	exit $EXIT_ERROR
+}
 echo " " 
-echo "creating dump_reporter.rb"
+echo "creating dump_reporter.rb ($TABCMD_DIR)"
 echo " " 
 cat >$TABCMD_DIR/tabcmd/common/ruby/lib/dump_reporter.rb << EOF
 #require 'tabutil'
@@ -231,3 +241,33 @@ class DumpReporter
   end
 end
 EOF
+[ ! -f "$TABCMD_DIR/tabcmd/common/ruby/lib/dump_reporter.rb" ] && {
+	echo "Failed to create dump_reporter.rb"
+	exit $EXIT_ERROR
+}
+echo " " 
+echo "Setup Environment"
+echo " "
+echo "export TABCMD_DIR=$TABCMD_DIR" >> /etc/profile
+echo "export RUBY_LIB=$TABCMD_DIR/tabcmd/lib" >> /etc/profile
+source /etc/profile
+echo " "
+echo "Make the tabcmd.rb file executable"
+chmod +x /usr/local/tabcmd/tabcmd/bin/tabcmd.rb 
+echo " " 
+echo "Install JAVA."
+[ -d /usr/java ] && echo "/usr/java exists." && exit $EXIT_ERROR
+mkdir /usr/java && tar -xvzf ~/jre.tar.gz -C /usr/java
+echo "Adding JAVA_PATH to profile"
+export PATH=$PATH:/usr/java/jre1.7.0_51/bin/
+export JAVA_HOME=/usr/java/jre1.7.0_51/bin/
+echo "export PATH=\$PATH:/usr/java/jre1.7.0_51/bin/" >> /etc/profile
+echo "export JAVA_HOME=/usr/java/jre1.7.0_51/bin/" >> /etc/profile
+echo " "
+/usr/java/jre1.7.0_51/bin/java -version
+[ "$(/usr/java/jre1.7.0_51/bin/java -version 2&> /dev/stdout | head -n1)" != "java version \"1.7.0_51\"" ] && {
+	echo "JAVA NOT INSTALLED"
+	exit $EXIT_ERROR
+}
+echo " "
+rvm install jruby
