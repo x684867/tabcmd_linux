@@ -211,4 +211,23 @@ gem list
 echo "------------------------------"
 echo " $(date)"
 echo "------------------------------"
-
+echo " "
+echo "Remove tabutil.rb"
+[ -f "$TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb" ] && rm ~/tabcmd/rb/tabcmd/common/ruby/lib/tabutil.rb
+[ -f "$TABCMD_DIR/tabcmd/common/ruby/lib/tabutil.rb" ] && echo "Failed to delete tabutil.rb" && exit $EXIT_ERROR
+echo " " 
+echo "creating dump_reporter.rb"
+echo " " 
+cat >$TABCMD_DIR/tabcmd/common/ruby/lib/dump_reporter.rb << EOF
+#require 'tabutil'
+#Modified by tabcmd_linux/setup.sh
+class DumpReporter
+  def initialize(app_name, log_dir, exit_on_exception)
+  end
+  def self.setup(app_name, log_dir, exit_on_exception)
+    $dump_reporter = DumpReporter.new(app_name, log_dir, exit_on_exception)
+  end
+  def self.force_crash
+  end
+end
+EOF
