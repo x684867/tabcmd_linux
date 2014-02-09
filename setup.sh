@@ -40,7 +40,10 @@ install_package() {
 	  		exit $EXIT_ERROR
 	  	}
 	  	echo "Installing $1"
-	  	apt-get install $1 -y || echo "failed to install $1" && exit $EXIT_ERROR
+	  	apt-get install $1 -y || {
+	  		echo "failed to install $1";
+	  		exit $EXIT_ERROR
+	  	}
 	  	echo "Package $1 is installed"
 	  	for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
 	  	echo "install_package() finished."
@@ -127,7 +130,8 @@ echo " "
 echo "Installing prerequisites..."
 echo " "
 echo "    Installing ruby1.9.1"
-install_package ruby1.9.1 
+install_package ruby1.9.1
+install_package ruby1.9.1-dev
 echo " "
 echo "    Installing ruby-rvm"
 echo " "
@@ -188,13 +192,15 @@ gem install arel && \
 gem install gem_plugin && \
 gem install rchardet && \
 gem install sources && \
-gem install mmf && \
-gem install mkrf && \
-
-
-
-
-
+gem install actionmailer && \
+gem install actionpack && \
+gem install activesupport && \
+gem install activemodel && \
+gem install activeresource && \
+gem install rails && \
+gem install railties && \
+gem install ruby-debug19 && \
+gem install hpricot
 echo " "
 echo "Gems Installed."
 echo " " 
