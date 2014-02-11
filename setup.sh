@@ -262,7 +262,7 @@ echo "Adding JAVA_PATH to profile"
 export PATH=$PATH:/usr/java/jre1.7.0_51/bin/
 export JAVA_HOME=/usr/java/jre1.7.0_51/bin/
 echo "export PATH=\$PATH:/usr/java/jre1.7.0_51/bin/" >> /etc/profile
-echo "export JAVA_HOME=/usr/java/jre1.7.0_51/bin/" >> /etc/profile
+echo "export JAVA_HOME=/usr/java/jre1.7.0_51/" >> /etc/profile
 echo " "
 /usr/java/jre1.7.0_51/bin/java -version
 [ "$(/usr/java/jre1.7.0_51/bin/java -version 2&> /dev/stdout | head -n1)" != "java version \"1.7.0_51\"" ] && {
