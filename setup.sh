@@ -133,60 +133,86 @@ echo "    Installing git core to get the assets we need from this project."
 echo " "
 install_package git-core
 echo " "
+
+echo "    Installing unzip"
+echo " "
+install_package unzip 
+echo " "
 echo "    Installing ruby1.9.1"
-install_package ruby1.9.1
-install_package ruby1.9.1-dev
+install_package ruby1.9.1 && \
+install_package ruby1.9.1-dev && \
+install_package rubygems1.9.1 && \
+install_package irb1.9.1 && \
+install_package ri1.9.1 && \
+install_package rdoc1.9.1 && \
+install_package build-essential && \
+install_package libopenssl-ruby1.9.1 && \
+install_package libssl-dev && \
+install_package zliblg-dev && \
+echo "Packages are installed."
+echo " "
+echo " "
+echo "   Configuring Ruby."
+sudo update-alternatives --install /usr/bin/ruby ruby /usr/bin/ruby1.9.1 400 \
+         --slave   /usr/share/man/man1/ruby.1.gz ruby.1.gz \
+                        /usr/share/man/man1/ruby1.9.1.1.gz \
+        --slave   /usr/bin/ri ri /usr/bin/ri1.9.1 \
+        --slave   /usr/bin/irb irb /usr/bin/irb1.9.1 \
+        --slave   /usr/bin/rdoc rdoc /usr/bin/rdoc1.9.1 && \
+sudo update-alternatives --config ruby && \
+sudo update-alternatives --config gem || {
+	echo "Failed to update-alternatives for ruby"
+	exit $EXIT_ERROR
+}
 echo " "
 echo "    Installing ruby-rvm"
 echo " "
 install_package ruby-rvm
 echo " "
-echo "    Installing JRUBY"
-echo " "
-install_package jruby
-echo " "
-echo "    Installing unzip"
-echo " "
-install_package unzip 
-echo " "
+echo "    Installing Java Run-time Environment (JRE) 6u45)"
 cd ~/
 git clone https://github.com/x684867/tabcmd_linux
-#cd tabcmd_linux
-#[ ! -f jre-6u45-linux-x64.bin ] && echo "missing jre-6u45-linux-x64.bin" && exit $EXIT_ERROR
-#[ ! -x jre-6u45-linux-x64.bin ] && chmod +x jre-6u45-linux-x64.bin
-#[ ! -x jre-6u45-linux-x64.bin ] && echo "could not make jre-6u45-linux-x64.bin executable" && exit $EXIT_ERROR
-#echo "Ready to install JAVA (jre-6u45-linux-x64.bin)"
-#./jre-6u45-linux-x64.bin || {
-#	echo "Failed to install jre-6u45-linux-x64.bin"
-#	exit $EXIT_ERROR
-#}
-#[ ! -d  mv jre1.6.0_45 ] && echo "could not find ~/jre1.6.0_45/" && exit $EXIT_ERROR
-#[ -d /usr/java ] && rm -rf /usr/java && echo "deleted /usr/java"
-#[ ! -d /usr/java ] && mkdir /usr/java && echo "re-created /usr/java"
-#[ ! -d /usr/java ] && echo "/usr/java could not be created" && exit $EXIT_ERROR
-#
-#mv jre1.6.0_45/ /usr/java/
-#
-#[ ! -d /usr/java/jre1.6.0_45 ] && echo "/usr/java/jre1.6.0_45/ was not moved successfully." && exit $EXIT_ERROR
-#
-#echo "creating /usr/java/current => /usr/java/jre1.6.0_45 symlink"
-#ln -s /usr/java/jre1.6.0_45/ /usr/java/current
-#
-#[ -d /usr/share/java ] && rm -rf /usr/share/java
-# ! -d /usr/share/java ] && ln -s /usr/java /usr/share/java
-#cho "/usr/share/java => /usr/java/ symlink created."
-#
-#cho "Setting JAVA_HOME and adding JAVA_HOME/bin to PATH."
-#cho "export JAVA_HOME=/usr/java/current" >> /etc/profile
-#cho "export PATH=\$PATH:$JAVA_HOME/bin" >> /etc/profile
-#cho " "
-#cho "re-sourcing /etc/profile"
-#cho " "
+cd tabcmd_linux
+[ ! -f jre-6u45-linux-x64.bin ] && echo "missing jre-6u45-linux-x64.bin" && exit $EXIT_ERROR
+[ ! -x jre-6u45-linux-x64.bin ] && chmod +x jre-6u45-linux-x64.bin
+[ ! -x jre-6u45-linux-x64.bin ] && echo "could not make jre-6u45-linux-x64.bin executable" && exit $EXIT_ERROR
+echo "Ready to install JAVA (jre-6u45-linux-x64.bin)"
+./jre-6u45-linux-x64.bin || {
+	echo "Failed to install jre-6u45-linux-x64.bin"
+	exit $EXIT_ERROR
+}
+[ ! -d  mv jre1.6.0_45 ] && echo "could not find ~/jre1.6.0_45/" && exit $EXIT_ERROR
+[ -d /usr/java ] && rm -rf /usr/java && echo "deleted /usr/java"
+[ ! -d /usr/java ] && mkdir /usr/java && echo "re-created /usr/java"
+[ ! -d /usr/java ] && echo "/usr/java could not be created" && exit $EXIT_ERROR
+
+mv jre1.6.0_45/ /usr/java/
+
+[ ! -d /usr/java/jre1.6.0_45 ] && echo "/usr/java/jre1.6.0_45/ was not moved successfully." && exit $EXIT_ERROR
+
+echo "creating /usr/java/current => /usr/java/jre1.6.0_45 symlink"
+ln -s /usr/java/jre1.6.0_45/ /usr/java/current
+
+[ -d /usr/share/java ] && rm -rf /usr/share/java
+ ! -d /usr/share/java ] && ln -s /usr/java /usr/share/java
+echo "/usr/share/java => /usr/java/ symlink created."
+
+echo "Setting JAVA_HOME and adding JAVA_HOME/bin to PATH."
+echo "export JAVA_HOME=/usr/java/current" >> /etc/profile
+echo "export PATH=\$PATH:$JAVA_HOME/bin" >> /etc/profile
+echo " "
+echo "re-sourcing /etc/profile"
+echo " "
 source /etc/profile
 java -version || {
 	echo "Java failed to install correctly!"
 	exit $EXIT_ERROR
 }
+echo " "
+echo "    Installing jruby"
+echo " "
+install_package jruby
+echo " "
 echo " " 
 echo "Prerequisites are installed."
 echo " "
