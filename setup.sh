@@ -326,5 +326,19 @@ source /etc/profile
 echo " "
 echo "Make the tabcmd.rb file executable"
 chmod +x /usr/local/tabcmd/tabcmd/bin/tabcmd.rb 
-echo " " 
+echo " "
+echo "Substitute pathing in ../bin/tabcmd.rb to use our installation paths."
+echo " "
+#REPLACES ENTRIES
+sed -i -e 's/\$LOAD_PATH << File\.expand_path(.*\/common\/ruby\/lib.*/COMMON_LIB_PLACEHOLDER/' /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e 's/require File\.expand_path(.*$/TABCMD_LIB_PLACEHOLDER/' /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e 's/\$LOAD_PATH << File\.expand_path(.*\/lib.*/TABCMD_LIB_DIR_PLACEHOLDER/' /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+#RECONFIGURE THE ENTRIES
+sed -i -e "s/COMMON_LIB_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$TABCMD_DIR\/tabcmd\/common\/ruby\/lib\')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/TABCMD_LIB_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$TABCMD_DIR\/tabcmd\/lib\/tabcmd.rb')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/TABCMD_LIB_DIR_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$TABCMD_DIR\/tabcmd\/lib\')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+echo " "
+echo "Done.  Pathing is fixed."
+echo " "
+
 
