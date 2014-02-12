@@ -166,8 +166,11 @@ mv jre1.6.0_45/ /usr/java/
 [ ! -d /usr/java/jre1.6.0_45 ] && echo "/usr/java/jre1.6.0_45/ was not moved successfully." && exit $EXIT_ERROR
 
 echo "creating /usr/java/current => /usr/java/jre1.6.0_45 symlink"
-
 ln -s /usr/java/jre1.6.0_45/ /usr/java/current
+
+[ -d /usr/share/java ] && rm -rf /usr/share/java
+[ ! -d /usr/share/java ] && ln -s /usr/java /usr/share/java
+echo "/usr/share/java => /usr/java/ symlink created."
 
 echo "Setting JAVA_HOME and adding JAVA_HOME/bin to PATH."
 echo "export JAVA_HOME=/usr/java/current" >> /etc/profile
