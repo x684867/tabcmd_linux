@@ -61,13 +61,7 @@ echo "$0 starting..."
 ping -c1 8.8.8.8 &> /dev/null
 [ "$?" == "0" ] && {
 	export HAS_NETWORKING=1
-	cd ~/
-	[ ! -f ~/jre.bin ] && wget https://github.com/x684867/tabcmd_linux/jre-6u45-linux-x64.bin -O ~/jre.bin
-	[ ! -f ~/jre.bin ] && echo "Failed to download the jre bin file." && exit $EXIT_ERROR
-	[ ! -x ~/jre.bin ] && chmod +x ~/jre.bin
-	[ ! -x ~/jre.bin ] && echo "Failed to make jre.bin executable." && exit $EXIT_ERROR
 }
-
 echo "-------------------------------------------------------------------"
 echo "(c) 2014 Sam Caldwell.  See https://github.com/x684867/tabcmd_linux"
 echo "-------------------------------------------------------------------"
@@ -135,6 +129,10 @@ echo " "
 echo " "
 echo "Installing prerequisites..."
 echo " "
+echo "    Installing git core to get the assets we need from this project."
+echo " "
+install_package git-core
+echo " "
 echo "    Installing ruby1.9.1"
 install_package ruby1.9.1
 install_package ruby1.9.1-dev
@@ -147,10 +145,41 @@ echo "    Installing unzip"
 echo " "
 install_package unzip 
 echo " "
-echo "Install JAVA"
-gunzip jre.gz
-chmod +x jre
-./jre
+cd ~/
+git clone https://github.com/x684867/tabcmd_linux
+cd tabcmd_linux
+[ ! -f jre-6u45-linux-x64.bin ] && echo "missing jre-6u45-linux-x64.bin" && exit $EXIT_ERROR
+[ ! -x jre-6u45-linux-x64.bin ] && chmod +x jre-6u45-linux-x64.bin
+[ ! -x jre-6u45-linux-x64.bin ] && echo "could not make jre-6u45-linux-x64.bin executable" && exit $EXIT_ERROR
+echo "Ready to install JAVA (jre-6u45-linux-x64.bin)"
+./jre-6u45-linux-x64.bin || {
+	echo "Failed to install jre-6u45-linux-x64.bin"
+	exit $EXIT_ERROR
+}
+[ ! -d  mv jre1.6.0_45 ] && echo "could not find ~/jre1.6.0_45/" && exit $EXIT_ERROR
+[ -d /usr/java ] && rm -rf /usr/java && echo "deleted /usr/java"
+[ ! -d /usr/java ] && mkdir /usr/java && echo "re-created /usr/java"
+[ ! -d /usr/java ] && echo "/usr/java could not be created" && exit $EXIT_ERROR
+
+mv jre1.6.0_45/ /usr/java/
+
+[ ! -d /usr/java/jre1.6.0_45 ] && echo "/usr/java/jre1.6.0_45/ was not moved successfully." && exit $EXIT_ERROR
+
+echo "creating /usr/java/current => /usr/java/jre1.6.0_45 symlink"
+
+ln -s /usr/java/jre1.6.0_45/ /usr/java/current
+
+echo "Setting JAVA_HOME and adding JAVA_HOME/bin to PATH."
+echo "export JAVA_HOME=/usr/java/current" >> /etc/profile
+echo "export PATH=\$PATH:$JAVA_HOME/bin" >> /etc/profile
+echo " "
+echo "re-sourcing /etc/profile"
+echo " "
+source /etc/profile
+java -version || {
+	echo "Java failed to install correctly!"
+	exit $EXIT_ERROR
+}
 echo " " 
 echo "Prerequisites are installed."
 echo " "
