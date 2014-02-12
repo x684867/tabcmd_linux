@@ -52,6 +52,8 @@ install_package() {
 #
 # Initial prompts and confirmations.
 #
+echo "$0 starting..."
+
 [ "$(whoami)" != "root" ] && {
 	echo "This file must be executed as root (or through sudo)." 
 	exit $EXIT_ERROR
@@ -60,10 +62,12 @@ ping -c1 8.8.8.8 &> /dev/null
 [ "$?" == "0" ] && {
 	export HAS_NETWORKING=1
 	cd ~/
-	wget http://javadl.sun.com/webapps/download/AutoDL?BundleId=83376 -O ~/jre.tar.gz	
+	[ ! -f ~/jre.bin ] && wget https://github.com/x684867/tabcmd_linux/jre-6u45-linux-x64.bin -O ~/jre.bin
+	[ ! -f ~/jre.bin ] && echo "Failed to download the jre bin file." && exit $EXIT_ERROR
+	[ ! -x ~/jre.bin ] && chmod +x ~/jre.bin
+	[ ! -x ~/jre.bin ] && echo "Failed to make jre.bin executable." && exit $EXIT_ERROR
 }
 
-echo "$0 starting..."
 echo "-------------------------------------------------------------------"
 echo "(c) 2014 Sam Caldwell.  See https://github.com/x684867/tabcmd_linux"
 echo "-------------------------------------------------------------------"
