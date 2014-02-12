@@ -201,7 +201,7 @@ echo "/usr/share/java => /usr/java/ symlink created."
 
 echo "Setting JAVA_HOME and adding JAVA_HOME/bin to PATH."
 echo "export JAVA_HOME=/usr/java/current" >> /etc/profile
-echo "export PATH=\$PATH:$JAVA_HOME/bin" >> /etc/profile
+echo "export PATH=\$PATH:\$JAVA_HOME/bin" >> /etc/profile
 echo " "
 echo "re-sourcing /etc/profile"
 echo " "
