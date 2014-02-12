@@ -148,7 +148,7 @@ install_package rdoc1.9.1 && \
 install_package build-essential && \
 install_package libopenssl-ruby1.9.1 && \
 install_package libssl-dev && \
-apt-get install zlib1g-dev -y && \
+install_package zlib1g-dev -y && \
 ruby --version
 echo "Packages are installed."
 echo " "
