@@ -182,7 +182,8 @@ echo "Ready to install JAVA (jre-6u45-linux-x64.bin)"
 	echo "Failed to install jre-6u45-linux-x64.bin"
 	exit $EXIT_ERROR
 }
-[ ! -d  mv jre1.6.0_45 ] && echo "could not find ~/jre1.6.0_45/" && exit $EXIT_ERROR
+
+[ ! -d jre1.6.0_45 ] && echo "could not find ~/jre1.6.0_45/" && exit $EXIT_ERROR
 [ -d /usr/java ] && rm -rf /usr/java && echo "deleted /usr/java"
 [ ! -d /usr/java ] && mkdir /usr/java && echo "re-created /usr/java"
 [ ! -d /usr/java ] && echo "/usr/java could not be created" && exit $EXIT_ERROR
