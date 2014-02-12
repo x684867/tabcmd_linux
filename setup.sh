@@ -183,8 +183,9 @@ java -version || {
 echo " " 
 echo "Prerequisites are installed."
 echo " "
-echo "Creating $TABCMD_DIR"
+echo "Purging Previous Install."
 [ ! -d $TABCMD_DIR ] && rm -rf $TABCMD_DIR
+echo "Creating $TABCMD_DIR"
 mkdir -p $TABCMD_DIR || {
 	echo "Failed to create $TABCMD_DIR"; 
 	exit $EXIT_ERROR
