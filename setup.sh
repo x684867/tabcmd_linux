@@ -149,6 +149,7 @@ install_package build-essential && \
 install_package libopenssl-ruby1.9.1 && \
 install_package libssl-dev && \
 install_package zliblg-dev && \
+ruby --version
 echo "Packages are installed."
 echo " "
 echo " "
