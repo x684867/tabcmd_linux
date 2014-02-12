@@ -206,7 +206,8 @@ echo "Current Directory: $(pwd)"
 echo " "
 echo "Installing Ruby Gems"
 echo " "
-gem update
+gem update && \
+rvm install jruby
 gem install abstract && \
 gem install bundler && \
 gem install rake && \
@@ -240,8 +241,10 @@ gem install activeresource && \
 gem install rails && \
 gem install railties && \
 gem install ruby-debug19 && \
-gem install hpricot
-echo " "
+gem install hpricot || {
+	echo "One or more GEMS failed to install" 
+	exit $EXIT_ERROR
+}
 echo "Gems Installed."
 echo " " 
 echo "------------------------------"
@@ -288,19 +291,4 @@ echo " "
 echo "Make the tabcmd.rb file executable"
 chmod +x /usr/local/tabcmd/tabcmd/bin/tabcmd.rb 
 echo " " 
-echo "Install JAVA."
-[ -d /usr/java ] && echo "/usr/java exists." && exit $EXIT_ERROR
-mkdir /usr/java && tar -xvzf ~/jre.tar.gz -C /usr/java
-echo "Adding JAVA_PATH to profile"
-export PATH=$PATH:/usr/java/jre1.7.0_51/bin/
-export JAVA_HOME=/usr/java/jre1.7.0_51/bin/
-echo "export PATH=\$PATH:/usr/java/jre1.7.0_51/bin/" >> /etc/profile
-echo "export JAVA_HOME=/usr/java/jre1.7.0_51/" >> /etc/profile
-echo " "
-/usr/java/jre1.7.0_51/bin/java -version
-[ "$(/usr/java/jre1.7.0_51/bin/java -version 2&> /dev/stdout | head -n1)" != "java version \"1.7.0_51\"" ] && {
-	echo "JAVA NOT INSTALLED"
-	exit $EXIT_ERROR
-}
-echo " "
-rvm install jruby
+
