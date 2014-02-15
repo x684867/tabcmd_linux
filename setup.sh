@@ -28,6 +28,9 @@ export HAS_NETWORKING=0
 
 export TABCMD_DIR=/usr/local/tabcmd
 
+prettyPause(){
+	for i in $(seq $1 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+}
 install_package() {
 	if [ "$(dpkg -l $1 | tail -n1 | grep ii | grep $1 | awk '{print $1"_"$2}')" == "ii_$1" ]; then
 		echo ruby1.9.1 is already installed
@@ -43,7 +46,7 @@ install_package() {
 	  		exit $EXIT_ERROR
 	  	}
 	  	echo "Package $1 is installed"
-	  	for i in $(seq 5 -1 1);  do echo -n " $i "; sleep 1; done; echo " GO! "
+	  	prettyPause 3
 	  	echo "install_package() finished."
 	fi
 	return 0
@@ -101,23 +104,32 @@ while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y" ]; do
 done
 echo " "
 ANSWER="N"
+export UPLOAD_PATH=""
 while [ $(echo "$ANSWER" | tr yn YN | tr -dc YN) != "Y" ]; do
 	echo "Where did you upload the tabcmd.jar file (\$path/tabcmd.jar)?"
-	read -p "Enter path: " UPLOAD_PATH
+	read -p "Enter path (e.g. /home/scaldwell/tabcmd.jar): " UPLOAD_PATH
     echo " "
     if [ -z "$UPLOAD_PATH" ]; then
-      echo "No UPLOAD_PATH specified.  Try again."
-      ANSWER="N"
-	else
-      echo "Verifying the file/path..."
-
-      if [ -f $UPLOAD_PATH ]; then
-        ANSWER="Y"
-        cp $UPLOAD_PATH /tmp/tabcmd.jar
-      else
+		echo "Assuming default ~/tabcmd.jar"
+		export UPLOAD_PATH=~/tabcmd.jar
+		prettyPause 1
+	fi
+	[ -f $UPLOAD_PATH/tabcmd.jar ] && {
+		echo "Assuming path only was provided."
+		export UPLOAD_PATH=$UPLOAD_PATH/tabcmd.jar
+	}
+    echo "Verifying the file/path..."
+    if [ -f $UPLOAD_PATH ]; then
+		ANSWER="Y"
+		echo "File exists ($UPLOAD_PATH)"
+        cp -rfv $UPLOAD_PATH /tmp/tabcmd.jar 
+		[ ! -f /tmp/tabcmd.jar ] && {
+			echo "Failed to copy tabcmd.jar from $UPLOAD_PATH to /tmp/tabcmd.jar"
+			exit $EXIT_ERROR
+		}
+    else
         echo "Could not find the file...please investigate and the script will retry."
         ANSWER="N"
-      fi
     fi
 done
 echo " "
@@ -139,6 +151,9 @@ echo " "
 install_package unzip 
 echo " "
 echo "    Installing ruby1.9.1"
+echo " "
+ruby --version && apt-get purge ruby -y && \
+ruby --version && apt-get purge ruby1.9.1 -y && \
 install_package ruby1.9.1 && \
 install_package ruby1.9.1-dev && \
 install_package rubygems1.9.1 && \
@@ -219,14 +234,20 @@ echo " "
 echo "Prerequisites are installed."
 echo " "
 echo "Purging Previous Install."
-[ ! -d $TABCMD_DIR ] && rm -rf $TABCMD_DIR
-echo "Creating $TABCMD_DIR"
+rm -rfv $TABCMD_DIR || {
+	echo "Failed (ERROR: $?) to purge $TABCMD_DIR"
+	exit $EXIT_ERROR
+}
+echo "...successfully purged $TABCMD_DIR"
+echo " "
+echo "Creating $TABCMD_DIR..."
 mkdir -p $TABCMD_DIR || {
 	echo "Failed to create $TABCMD_DIR"; 
 	exit $EXIT_ERROR
 }
 echo "checking..."
 [ ! -d $TABCMD_DIR ] && echo "Verification failed for ($TABCMD_DIR)"
+echo "...successfully created $TABCMD_DIR"
 echo " "
 echo "Moving tabcmd.jar into $TABCMD_DIR"
 [ ! -f /tmp/tabcmd.jar ] && echo "Could not find /tmp/tabcmd.jar" && exit $EXIT_ERROR
@@ -298,8 +319,22 @@ echo "Remove tabutil.rb ($TABCMD_DIR)"
 	exit $EXIT_ERROR
 }
 echo " " 
-echo "creating dump_reporter.rb ($TABCMD_DIR)"
+echo "Setup Environment"
+echo " "
+echo "export TABCMD_DIR=$TABCMD_DIR" >> /etc/profile
+echo "export RUBY_LIB=$TABCMD_DIR/tabcmd/lib" >> /etc/profile
+source /etc/profile
+echo " "
+echo "Make the tabcmd.rb file executable"
+chmod +x $TABCMD_DIR/tabcmd/bin/tabcmd.rb 
+echo " "
+echo "-------------------------------------------"
+echo "Start fixes to tabcmd.jar contents in order"
+echo "to adapt the ruby scripts for use in Linux."
+echo "-------------------------------------------"
 echo " " 
+echo "Step #1: creating dump_reporter.rb ($TABCMD_DIR)"
+echo " "
 cat >$TABCMD_DIR/tabcmd/common/ruby/lib/dump_reporter.rb << EOF
 #require 'tabutil'
 #Modified by tabcmd_linux/setup.sh
@@ -310,6 +345,7 @@ class DumpReporter
     $dump_reporter = DumpReporter.new(app_name, log_dir, exit_on_exception)
   end
   def self.force_crash
+	puts "DumpReporter.force_crash"
   end
 end
 EOF
@@ -317,26 +353,21 @@ EOF
 	echo "Failed to create dump_reporter.rb"
 	exit $EXIT_ERROR
 }
-echo " " 
-echo "Setup Environment"
-echo " "
-echo "export TABCMD_DIR=$TABCMD_DIR" >> /etc/profile
-echo "export RUBY_LIB=$TABCMD_DIR/tabcmd/lib" >> /etc/profile
-source /etc/profile
-echo " "
-echo "Make the tabcmd.rb file executable"
-chmod +x /usr/local/tabcmd/tabcmd/bin/tabcmd.rb 
 echo " "
 echo "Substitute pathing in ../bin/tabcmd.rb to use our installation paths."
 echo " "
-#REPLACES ENTRIES
-sed -i -e 's/\$LOAD_PATH << File\.expand_path(.*\/common\/ruby\/lib.*/COMMON_LIB_PLACEHOLDER/' /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
-sed -i -e 's/require File\.expand_path(.*$/TABCMD_LIB_PLACEHOLDER/' /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
-sed -i -e 's/\$LOAD_PATH << File\.expand_path(.*\/lib.*/TABCMD_LIB_DIR_PLACEHOLDER/' /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
-#RECONFIGURE THE ENTRIES
-sed -i -e "s/COMMON_LIB_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$TABCMD_DIR\/tabcmd\/common\/ruby\/lib\')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
-sed -i -e "s/TABCMD_LIB_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$TABCMD_DIR\/tabcmd\/lib\/tabcmd.rb')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
-sed -i -e "s/TABCMD_LIB_DIR_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$TABCMD_DIR\/tabcmd\/lib\')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+echo "Replace the entries that exist with PLACEHOLDER tags"
+echo " "
+sed -i -e "s/\$LOAD_PATH << File\.expand_path(.*\/common\/ruby\/lib.*/COMMON_LIB_PLACEHOLDER/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/require File\.expand_path(.*$/TABCMD_LIB_PLACEHOLDER/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/\$LOAD_PATH << File\.expand_path(.*\/lib.*/TABCMD_LIB_DIR_PLACEHOLDER/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+echo " "
+echo "Substitute new settings for the existing settings."
+echo " "
+sed -i -e "s/COMMON_LIB_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$(echo $TABCMD_DIR | sed -e 's/\//\\\//g')\/tabcmd\/common\/ruby\/lib\')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/TABCMD_LIB_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$(echo $TABCMD_DIR | sed -e 's/\//\\\//g')\/tabcmd\/lib\/tabcmd.rb')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/TABCMD_LIB_DIR_PLACEHOLDER/\$LOAD_PATH << File\.expand_path(\'$(echo $TABCMD_DIR | sed -e 's/\//\\\//g')\/tabcmd\/lib\')/" /usr/local/tabcmd/tabcmd/bin/tabcmd.rb
+sed -i -e "s/TABCMD_LIB/File\.expand_path(\'$(echo $TABCMD_DIR | sed -e 's/\//\\\//g')\/tabcmd\/lib\')/" /usr/local/tabcmd/tabcmd/lib/tabcmd.rb
 echo " "
 echo "Done.  Pathing is fixed."
 echo " "
