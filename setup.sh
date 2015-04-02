@@ -40,7 +40,7 @@ git clone https://github.com/x684867/tabcmd_linux
 	exit $EXIT_GITHUBFAILED
 }
 [ ! -f ~/install.sh ] && {
-	echo "Failed to download ~/install.sh
+	echo "Failed to download ~/install.sh"
 	exit $EXIT_MISSINGFILE
 }
 [ ! -x ~/install.sh ] && {
